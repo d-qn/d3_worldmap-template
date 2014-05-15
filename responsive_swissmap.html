@@ -67,29 +67,30 @@ var path = d3.geo.path()
 d3.json("data/ch-cantons.json", function(error, swiss) {
 
   var topo = topojson.feature(swiss, swiss.objects.cantons).features;
-  draw(topo, swiss);
+  var boundary = topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; });
+  
+  draw(topo, boundary);
 
 });
 
 
-function draw(topo, swiss) {
+function draw(topo, boundary) {
 
- var canton = g.selectAll(".canton").data(topo);
+  g.append("g")
+    .selectAll("path")
+    .data(topo)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .attr("class", "canton")
+    .attr("name", function(d,i) { return d.properties.name; })
+    .attr("id", function(d,i) { return d.properties.abbr; });
 
-  canton.enter().insert("path")
-      .attr("class", "canton")
+
+  g.append("path")
+      .datum(boundary)
+      .attr("class", "canton-boundary")
       .attr("d", path);
-
-  // g.append("path")
-  //     .datum(topo)
-  //     .attr("class", "canton")
-  //     .attr("d", path);
-
-  // g.append("path")
-  //     .datum(topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; }))
-  //     .attr("class", "canton-boundary")
-  //     .attr("d", path);
-
 
 }
 
