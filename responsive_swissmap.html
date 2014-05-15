@@ -11,50 +11,82 @@
 
 
     <style type="text/css">
-	.states {
-        	fill: #aaa;
-        	stroke: #fff;
-        	stroke-width: 0.75px;
-	}
+	
 	#container {
 		margin:0.5%;
-		padding:5px;
-		border:1px solid #d0d0d0;
-		border-radius: 1px;
+		padding:20px;
+		border:2px solid #d0d0d0;
+		border-radius: 5px;
 	}
+
+	.canton {
+	  fill: #bbb;
+	}
+
+	.canton-boundary {
+	  fill: none;
+	  stroke: #fff;
+	  stroke-linejoin: round;
+	}
+
     </style>
   </head>
+
+
   <body onload="sizeChange()">
   
-    <div id="container"></div>
+  	<div id="container"></div>
 
-  <script type="text/javascript">
-	d3.select(window)
-    		.on("resize", sizeChange);
+	  <script type="text/javascript">
+		d3.select(window)
+	    		.on("resize", sizeChange);
 
-	var projection = d3.geo.albersUsa()
-		.scale(1100);
+		var projection = d3.geo.albers()
+		    .rotate([0, 0])
+		    .center([8.3, 46.8])
+		    .scale(14000)
+		    .precision(.1);
 
-	var path = d3.geo.path()
-		.projection(projection);
+		var path = d3.geo.path()
+			.projection(projection);
 
-	var svg = d3.select("#container")
-		.append("svg")
-    		.append("g");
-	
-	d3.json("data/us-states.json", function(error, us) {
-	  svg.selectAll(".states")
-		.data(topojson.feature(us, us.objects.states).features)
-	 .enter().append("path")
-		.attr("class", "states")
-		.attr("d", path);
-	});
+		var svg = d3.select("#container")
+			.append("svg");
 
-	function sizeChange() {
-	    d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
-	    $("svg").height($("#container").width()*0.618);
-	}
+		var g = svg.append("g"); 
+		
+		d3.json("data/ch-cantons.json", function(error, swiss) {
+		  var topo = topojson.feature(swiss, swiss.objects.cantons).features;
+		  var boundary = topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; });
+		  
+		  draw(topo, boundary);
+		});
 
-  </script>
+		function draw(topo, boundary) {
+
+		  g.append("g")
+		    .selectAll("path")
+		    .data(topo)
+		    .enter()
+		    .append("path")
+		    .attr("d", path)
+		    .attr("class", "canton")
+		    .attr("name", function(d,i) { return d.properties.name; })
+		    .attr("id", function(d,i) { return d.properties.abbr; });
+
+		  g.append("path")
+		      .datum(boundary)
+		      .attr("class", "canton-boundary")
+		      .attr("d", path);
+
+		}
+
+
+		function sizeChange() {
+		    d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
+		    $("svg").height($("#container").width()*0.618);
+		}
+
+	  </script>
   </body>
 </html>
