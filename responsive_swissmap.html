@@ -14,7 +14,7 @@
 		margin:0.5%;
 		padding:20px;
 		border:2px solid #d0d0d0;
-		border-radius: 5px;
+		border-radius: 2px;
 	}
 
 	.canton {
@@ -27,6 +27,18 @@
 	  stroke-linejoin: round;
 	}
 
+	div.tooltip {
+	  color: #222; 
+	  background: #fff; 
+	  padding: .5em; 
+	  text-shadow: #f5f5f5 0 1px 0;
+	  border-radius: 2px; 
+	  box-shadow: 0px 0px 2px 0px #a6a6a6; 
+	  opacity: 0.9; 
+	  position: absolute;
+	}
+
+
     </style>
   </head>
 
@@ -36,6 +48,59 @@
   	<div id="container"></div>
 
 	  <script type="text/javascript">
+
+
+		var highlight = function (){
+			
+			var item = d3.select(this);
+			var item_id = item.attr("id");
+			var show_tooltip = true;
+						
+			// In order to draw the highlighted feature properly, we have
+			// to append it to the end of the <svg>, so that it is on top
+			// of everything else
+			var detached = $('.' + item_id).detach();
+			$('svg').append(detached);
+				
+			$('.' + item_id).css("stroke", "#606060")
+					   .css("stroke-width", "1.5px")
+					   .css("fill-opacity", "0.9");
+			
+			if (show_tooltip == true){
+				tooltip.text(item.attr("name"))
+					   .style("left", (d3.event.pageX - 34) + "px")
+					   .style("top", (d3.event.pageY - 12) + "px");			
+				
+				tooltip.transition()
+					   .duration(500)
+					   .style("opacity", 0.8);;
+			}
+				   
+			$('#' + item_id).css("stroke", "#606060")
+					   .css("stroke-width", "2px");
+		}
+		
+		var unhighlight = function (){
+			var item = d3.select(this);
+			var show_tooltip = true;
+			
+			var item_id = item.attr("id");
+			
+			$('.' + item_id).css("stroke", "#F4F4F4")
+			                   .css("stroke-width", "1px")
+							   .css("fill-opacity", "0.8");
+			
+			if (show_tooltip == true){
+				tooltip.transition()
+					   .duration(1000)
+					   .style("opacity", 1e-6);
+			}
+				   
+			$('#' + item_id).css("stroke", "none");				   
+		}		
+		
+
+
 
 	  	var colorPalette = 	["rgb(198,219,239)", "rgb(158,202,225)","rgb(107,174,214)","rgb(66,146,198)","rgb(33,113,181)","rgb(8,81,156)","rgb(8,48,107)"]
 	  	var color = d3.scale.quantize()
@@ -58,6 +123,14 @@
 
 		var g = svg.append("g"); 
 		
+		var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
+		
+		function mousemove() {
+			tooltip.style("left", (d3.event.pageX + 3) + "px")
+			       .style("top", (d3.event.pageY - 26) + "px");
+		}
+
+
 		////// load data file
 		//////   TODO defer load data file?
 		//////   use d3.map? http://bl.ocks.org/mbostock/4060606
@@ -89,6 +162,10 @@
    			 d3.max(d3.values(dictValue))
 			]);
 
+  		var offsetL = document.getElementById('container').offsetLeft+20;
+	    var offsetT = document.getElementById('container').offsetTop+10;
+
+
 		  g.append("g")
 		    .selectAll("path")
 		    .data(topo)
@@ -105,7 +182,10 @@
 	          } else {
 	              return "#ccc";
 	          }
-	      });
+	      	})
+	      	.on("mouseover", highlight)
+			.on("mousemove", mousemove)
+			.on("mouseout", unhighlight);
 
 		  g.append("path")
 		      .datum(boundary)
