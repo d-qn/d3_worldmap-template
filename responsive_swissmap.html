@@ -57,16 +57,16 @@
 		var highlight = function (){
 			
 			var item = d3.select(this);
-			var item_id = item.attr("id");
+			var item_class = item.attr("class");
 			var show_tooltip = true;
 						
 			// In order to draw the highlighted feature properly, we have
 			// to append it to the end of the <svg>, so that it is on top
 			// of everything else
-			var detached = $('.' + item_id).detach();
+			var detached = $('.' + item_class).detach();
 			$('svg').append(detached);
 				
-			$('.' + item_id).css("stroke", "#606060")
+			$('.' + item_class).css("stroke", "#606060")
 					   .css("stroke-width", "10.5px")
 					   .css("fill-opacity", "0.9");
 			
@@ -80,7 +80,7 @@
 					   .style("opacity", 0.8);
 			}
 				   
-			$('#' + item_id).css("stroke", "#606060")
+			$('#' + item_class).css("stroke", "#606060")
 					   .css("stroke-width", "2px");
 		}
 		
@@ -88,9 +88,9 @@
 			var item = d3.select(this);
 			var show_tooltip = true;
 			
-			var item_id = item.attr("id");
+			var item_class = item.attr("class");
 			
-			$('.' + item_id).css("stroke", "#F4F4F4")
+			$('.' + item_class).css("stroke", "#F4F4F4")
 			                   .css("stroke-width", "1px")
 							   .css("fill-opacity", "0.8");
 			
@@ -100,11 +100,9 @@
 					   .style("opacity", 1e-6);
 			}
 				   
-			$('#' + item_id).css("stroke", "none");				   
+			$('#' + item_class).css("stroke", "none");				   
 		}		
 		
-
-
 
 	  	var colorPalette = 	["rgb(198,219,239)", "rgb(158,202,225)","rgb(107,174,214)","rgb(66,146,198)","rgb(33,113,181)","rgb(8,81,156)","rgb(8,48,107)"]
 	  	var color = d3.scale.quantize()
@@ -161,24 +159,20 @@
 
 		function draw(topo, boundary) {
 
+		//////////////   Draw choropleth map ///////
 		 color.domain([
    			 d3.min(d3.values(dictValue)),
    			 d3.max(d3.values(dictValue))
 			]);
 
-  		var offsetL = document.getElementById('container').offsetLeft+20;
-	    var offsetT = document.getElementById('container').offsetTop+10;
-
-
-		  g.append("g")
+		 g.append("g")
 		    .selectAll("path")
 		    .data(topo)
 		    .enter()
 		    .append("path")
 		    .attr("d", path)
-		    .attr("class", "canton")
 		    .attr("name", function(d,i) { return d.properties.name; })
-		    .attr("id", function(d,i) { return d.properties.abbr; })
+		    .attr("class", function(d,i) { return "canton " + d.properties.abbr; })
 		    .style("fill", function(d,i) {
           		var value = dictValue[d.properties.abbr];
 	          if (value) {
@@ -197,6 +191,66 @@
 		      .attr("d", path);
 
 		}
+
+		/////////////     Draw bar plot      //////////
+		var x = d3.scale.linear().range([0, 450]),
+			y = d3.scale.ordinal().rangeRoundBands([18, $("#container").height()], .1);
+
+		var xAxis = d3.svg.axis().scale(x).orient("top").ticks(5).tickSize(5),
+		    yAxis = d3.svg.axis().scale(y).orient("left").tickSize(0);	
+
+
+
+
+	// d3.csv("data/cantons_randomPercentages.csv", function(data) {
+
+	// 		// Parse numbers, and sort by value.
+	// 		data.forEach(function(d) { d.value = +d.value; });
+	// 		data.sort(function(a, b) { return b.value - a.value; });
+
+	// 		// Set the scale domain
+	// 		x.domain([0, d3.max(data, function(d) { return d.value; })]);
+	// 		y.domain(data, function(d) { return dictValue[d.id];});
+
+	// 		var bar = svg.selectAll("g.bar")
+	// 					 .data(data)
+	// 					 .enter().append("g")
+	// 					 .attr("class", "bar")
+	// 					 .attr("transform", function(d) { return "translate(55," + y(dictValue[d.id]) + ")";});
+
+	// 		bar.append("rect")
+	// 			.attr("width", function(d) { return x(d.value); })
+	// 			.attr("height", y.rangeBand())
+	// 			.attr("class", function(d) { return "bar_" + regions[d.name]["type"]; })
+	// 			.attr("id", function(d) { return d.name; })
+	// 			.on("mouseover", highlight)
+	// 			.on("mouseout", unhighlight);
+
+	// 		svg.append("g")
+	// 		  .attr("class", "x axis")
+	// 		  .attr("transform", function(d) { return "translate(55,20)"; })			  
+	// 		  .call(xAxis);
+
+	// 		svg.append("g")
+	// 		  .attr("class", "y axis")
+	// 		  .attr("transform", function(d) { return "translate(55,0)"; })	
+	// 		  .call(yAxis);
+			  
+	// 		bar.append("text")
+	// 		   .attr("class", "value")
+	// 		   .attr("x", function(d) { return x(d.value); })
+	// 			.attr("y", y.rangeBand() / 2)
+	// 			  .attr("dx", +3)
+	// 			  .attr("dy", ".35em")
+	// 			  .attr("text-anchor", "begin")
+	// 			  .text(function(d) { return format(d.value); });
+	// 	});
+
+
+
+
+
+
 
 		function sizeChange() {
 		    d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
