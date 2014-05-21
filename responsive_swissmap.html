@@ -10,6 +10,10 @@
 
     <style type="text/css">
 	
+	body {
+	  font: 10px sans-serif;
+	}
+
 	#container {
 		margin:0.5%;
 		padding:20px;
@@ -43,6 +47,32 @@
 	}
 
 
+	.bar rect {
+	  fill: steelblue;
+	}
+
+	.bar text.value {
+	  fill: white;
+	}
+
+	.axis {
+	  shape-rendering: crispEdges;
+	}
+
+	.axis path {
+	  fill: none;
+	}
+
+	.x.axis line {
+	  stroke: #fff;
+	  stroke-opacity: .8;
+	}
+
+	.y.axis path {
+	  stroke: black;
+	}
+
+
     </style>
   </head>
 
@@ -59,7 +89,20 @@
 			var item = d3.select(this);
 			var item_class = item.attr("class");
 			var show_tooltip = true;
-						
+
+			//// straumann's version					
+			// if (item_class == "bar_canton" || item_class == "bar_city"){
+			// 	item_class = item.attr("id");
+			// 	show_tooltip = false;
+			// }	
+
+			//// Mine
+			if (/^bar /.test(item_class)){
+				item_class = "canton " + item.attr("id");
+				show_tooltip = false;
+			}	
+
+
 			// In order to draw the highlighted feature properly, we have
 			// to append it to the end of the <svg>, so that it is on top
 			// of everything else
@@ -87,9 +130,14 @@
 		var unhighlight = function (){
 			var item = d3.select(this);
 			var show_tooltip = true;
-			
 			var item_class = item.attr("class");
 			
+			if (/^bar /.test(item_class)){
+				item_class = "canton " + item.attr("id");
+				show_tooltip = false;
+			}	
+
+
 			$('.' + item_class).css("stroke", "#F4F4F4")
 			                   .css("stroke-width", "1px")
 							   .css("fill-opacity", "0.8");
@@ -113,7 +161,7 @@
 
 		var projection = d3.geo.albers()
 		    .rotate([0, 0])
-		    .center([7.2, 47.5])
+		    .center([7.2, 46.8])
 		    .scale(10000)
 		    .precision(.1);
 
@@ -138,10 +186,12 @@
 		//////   use d3.map? http://bl.ocks.org/mbostock/4060606
 
 		var dictValue = {};
+		var datacsv;
 		d3.csv("data/cantons_randomPercentages.csv", function(error, data) {
 			if (error) { 
           		console.log(error);
        		} else { 
+       			datacsv = data;
           		data.forEach(function(d){
 	          		dictValue[d.id] = +d.value;
   				 });
@@ -193,68 +243,65 @@
 		}
 
 		/////////////     Draw bar plot      //////////
-		var x = d3.scale.linear().range([0, 450]),
-			y = d3.scale.ordinal().rangeRoundBands([18, $("#container").height()], .1);
 
-		var xAxis = d3.svg.axis().scale(x).orient("top").ticks(5).tickSize(5),
-		    yAxis = d3.svg.axis().scale(y).orient("left").tickSize(0);	
+		var format = d3.format(",.0f");
+
+		var x = d3.scale.linear().range([0, $("#container").width()/ 3]),
+			y = d3.scale.ordinal().rangeRoundBands([0, $("#container").height() / 1.4 ], .1);
+
+		var xAxis = d3.svg.axis().scale(x).orient("top").ticks(4).tickSize(- $("#container").height()),
+   			yAxis = d3.svg.axis().scale(y).orient("left").tickSize(0);	
 
 
+	d3.csv("data/cantons_randomPercentages.csv", function(data) {
 
+			// Parse numbers, and sort by value.
+			data.forEach(function(d) { d.value = +d.value; });
+			data.sort(function(a, b) { return b.value - a.value; });
 
-	// d3.csv("data/cantons_randomPercentages.csv", function(data) {
+			// Set the scale domain
+			x.domain([0, d3.max(data, function(d) { return d.value; })]);
+			y.domain(data.map(function(d) { return d.id; }));
 
-	// 		// Parse numbers, and sort by value.
-	// 		data.forEach(function(d) { d.value = +d.value; });
-	// 		data.sort(function(a, b) { return b.value - a.value; });
+			var bar = svg.selectAll("g.bar")
+				.data(data)
+				.enter().append("g")
+				.attr("class", "bar")
+				.attr("transform", function(d) { return "translate(40," + y(d.id) + ")";});
 
-	// 		// Set the scale domain
-	// 		x.domain([0, d3.max(data, function(d) { return d.value; })]);
-	// 		y.domain(data, function(d) { return dictValue[d.id];});
+			bar.append("rect")
+				.attr("width", function(d) { return x(d.value); })
+				.attr("height", y.rangeBand())
+				.attr("class", function(d) { return "bar " + d.id; })
+				.attr("id", function(d) { return d.id; })
+				.style('height', $("#container").height() + 'px')
+				.on("mouseover", highlight)
+				.on("mouseout", unhighlight);
 
-	// 		var bar = svg.selectAll("g.bar")
-	// 					 .data(data)
-	// 					 .enter().append("g")
-	// 					 .attr("class", "bar")
-	// 					 .attr("transform", function(d) { return "translate(55," + y(dictValue[d.id]) + ")";});
+			svg.append("g")
+			  .attr("class", "x axis")
+			  .attr("transform", function(d) { return "translate(40,15)"; })			  
+			  .call(xAxis);
 
-	// 		bar.append("rect")
-	// 			.attr("width", function(d) { return x(d.value); })
-	// 			.attr("height", y.rangeBand())
-	// 			.attr("class", function(d) { return "bar_" + regions[d.name]["type"]; })
-	// 			.attr("id", function(d) { return d.name; })
-	// 			.on("mouseover", highlight)
-	// 			.on("mouseout", unhighlight);
-
-	// 		svg.append("g")
-	// 		  .attr("class", "x axis")
-	// 		  .attr("transform", function(d) { return "translate(55,20)"; })			  
-	// 		  .call(xAxis);
-
-	// 		svg.append("g")
-	// 		  .attr("class", "y axis")
-	// 		  .attr("transform", function(d) { return "translate(55,0)"; })	
-	// 		  .call(yAxis);
+			svg.append("g")
+			  .attr("class", "y axis")
+			  .attr("transform", function(d) { return "translate(40,0)"; })	
+			  .call(yAxis);
 			  
-	// 		bar.append("text")
-	// 		   .attr("class", "value")
-	// 		   .attr("x", function(d) { return x(d.value); })
-	// 			.attr("y", y.rangeBand() / 2)
-	// 			  .attr("dx", +3)
-	// 			  .attr("dy", ".35em")
-	// 			  .attr("text-anchor", "begin")
-	// 			  .text(function(d) { return format(d.value); });
-	// 	});
-
-
-
-
-
+			bar.append("text")
+			   .attr("class", "value")
+			   .attr("x", function(d) { return x(d.value); })
+				.attr("y", y.rangeBand() / 2)
+				  .attr("dx", -15)
+				  .attr("dy", ".35em")
+				  .attr("text-anchor", "begin")
+				  .text(function(d) { return format(d.value); });
+		});
 
 
 		function sizeChange() {
 		    d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
-		    $("svg").height($("#container").width()*0.618);
+		    $("svg").height($("#container").width()*0.5);
 		}
 
 	  </script>
