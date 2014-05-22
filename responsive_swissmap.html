@@ -6,34 +6,26 @@
 
 	<script src="js/d3.min.js"></script>
 	<script src="js/topojson.v1.min.js"></script>
+	<script src="js/queue.min.js"></script>
     <script src="js/jquery-1.11.1.min.js"></script>
 
     <style type="text/css">
 	
 	body {
-	  font: 10px sans-serif;
+	  font: 9px sans-serif;
 	}
 
 	#container {
-		margin:0px 0%;
+		margin:1px 0%;
 	  	border:1px solid #000;
 	  	border-radius: 1px;
 		height:100%;
 	  	overflow:hidden;
 	}
 
-/*	.canton {
-	  fill: #bbb;
-	}
-*/
-/*	.canton:hover{
-		opacity: 0.5;
-	}*/
-
-
 	.canton-boundary {
 	  fill: none;
-	  stroke: 1px;
+	  stroke: 10px;
 	  stroke: #fff;
 	  stroke-linejoin: round;
 	}
@@ -97,7 +89,7 @@
 			//// Mine
 			if (/^bar /.test(item_class)){
 				item_class = item.attr("id");
-				show_tooltip = false;
+				// show_tooltip = false;
 			}	
 
 			// In order to draw the highlighted feature properly, we have
@@ -105,12 +97,11 @@
 			// of everything else
 
 // --------- THESE 2 LINES ARE PROBLEMATIC --------------- //
-			var detached = $('.' + item_class).detach();
-			$('svg').g,append(detached);
-				
-			$('.' + item_class).css("stroke", "#606060")
-					   .css("stroke-width", "2.5px")
-					   .css("fill-opacity", "0.5");
+			// var detached = $('.' + item_class).detach();
+			// $('svg').g.append(detached);
+			
+
+			$('.' + item_class).css("fill-opacity", "0.5");
 			
 			if (show_tooltip == true){
 				tooltip.text(item.attr("name"))
@@ -121,9 +112,9 @@
 					   .duration(400)
 					   .style("opacity", 0.8);
 			}
-				   
+			// id item class are bars
 			$('#' + item_class).css("stroke", "#606060")
-					   .css("stroke-width", "2px");
+					   .css("stroke-width", "2.5px");
 		}
 		
 		var unhighlight = function (){
@@ -133,12 +124,10 @@
 			
 			if (/^bar /.test(item_class)){
 				item_class = item.attr("id");
-				show_tooltip = false;
+				// show_tooltip = false;
 			}	
 
-			$('.' + item_class).css("stroke", "#F4F4F4")
-			                   .css("stroke-width", "1px")
-							   .css("fill-opacity", "0.8");
+			$('.' + item_class).css("fill-opacity", "1.0");
 			
 			if (show_tooltip == true){
 				tooltip.transition()
@@ -149,37 +138,24 @@
 			$('#' + item_class).css("stroke", "none");				   
 		}		
 
+		function mousemove() {
+			// To have a fixed location of the tooltip vs over the mouse pointer
+			tooltip.style("left", width / 2 + "px")
+			       .style("top",  26 + "px");
+			// tooltip.style("left", (d3.event.pageX + 3) + "px")
+			//        .style("top", (d3.event.pageY - 26) + "px");
+		}
+
+
 	  	var colorPalette = 	["rgb(198,219,239)", "rgb(158,202,225)","rgb(107,174,214)","rgb(66,146,198)","rgb(33,113,181)","rgb(8,81,156)","rgb(8,48,107)"]
 	  	var color = d3.scale.quantize()
     		.range(colorPalette);
-
-    		/// NEW
-		// d3.select(window)
-	 //    	.on("resize", sizeChange);
-		// var projection = d3.geo.albers()
-		//     .rotate([0, 0])
-		//     .center([7.2, 46.8])
-		//     .scale(10000)
-		//     .precision(.1);
-
-		// var path = d3.geo.path()
-		// 	.projection(projection);
-
-		// var svg = d3.select("#container")
-		// 	.append("svg");
-
-		// var g = svg.append("g"); 
 		
 		var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
-		var topo, boundary;
-
-		function mousemove() {
-			tooltip.style("left", (d3.event.pageX + 3) + "px")
-			       .style("top", (d3.event.pageY - 26) + "px");
-		}
+		var topo, boundary, svg, g;
 
 		var width = document.getElementById('container').offsetWidth;
-		var height = width / 2.3;
+		var height = width / 2.5;
 
 		setup(width,height);
 
@@ -187,7 +163,7 @@
 		  projection = d3.geo.albers()
 		    .translate([(width/2), (height/2)])
 		    .rotate([0, 0])
-		    .center([6.7, 46.8])
+		    .center([6.1, 47])
 		    .scale( width  * 9)
 		    .precision(.1);
 
@@ -202,34 +178,39 @@
 
 		}
 
-
 		////// load data file
 		//////   TODO defer load data file?
 		//////   use d3.map? http://bl.ocks.org/mbostock/4060606
 
 		var dictValue = {};
 		var datacsv;
-		d3.csv("data/cantons_randomPercentages.csv", function(error, data) {
+
+		queue().defer(d3.csv, "data/cantons_randomPercentages.csv").await(readyCsv);
+		queue().defer(d3.json, "data/ch-cantons.json").await(readyMap);
+
+		 function readyCsv(error, csv) {
+		 	if (error) { 
+          		console.log(error);
+       		} else { 
+       			datacsv = csv;
+          		datacsv.forEach(function(csv){
+	          		dictValue[csv.id] = +csv.value;
+  				 });
+			}
+		 }
+
+		function readyMap(error, swiss) {
 			if (error) { 
           		console.log(error);
        		} else { 
-       			datacsv = data;
-          		data.forEach(function(d){
-	          		dictValue[d.id] = +d.value;
-  				 });
+				topo = topojson.feature(swiss, swiss.objects.cantons).features;
+				boundary = topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; });
+				  
+				draw(topo, boundary);
 			}
-		})
-
-		d3.json("data/ch-cantons.json", function(error, swiss) {
-		  topo = topojson.feature(swiss, swiss.objects.cantons).features;
-		  boundary = topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; });
-		  
-		  draw(topo, boundary);
-		});
-
+		}
 
 		function draw(topo, boundary) {
-
 		//////////////   Draw choropleth map ///////
 		 color.domain([
    			 d3.min(d3.values(dictValue)),
@@ -261,69 +242,59 @@
 		      .attr("class", "canton-boundary")
 		      .attr("d", path);
 
-		}
-
 		/////////////     Draw bar plot      //////////
 
 		var format = d3.format(",.0f");
 
-		var x = d3.scale.linear().range([0, width/ 3]),
-			y = d3.scale.ordinal().rangeRoundBands([0, height / 1.4 ], .1);
+		var x = d3.scale.linear().range([0, width/ 2.5]),
+			y = d3.scale.ordinal().rangeRoundBands([10, height / 1.1 ], .1);
 
 		var xAxis = d3.svg.axis().scale(x).orient("top").ticks(4).tickSize(- height),
    			yAxis = d3.svg.axis().scale(y).orient("left").tickSize(0);	
 
+		// Parse numbers, and sort by value.
+		datacsv.forEach(function(d) { d.value = +d.value; });
+		datacsv.sort(function(a, b) { return b.value - a.value; });
 
-	d3.csv("data/cantons_randomPercentages.csv", function(data) {
+		// Set the scale domain
+		x.domain([0, d3.max(datacsv, function(d) { return d.value; })]);
+		y.domain(datacsv.map(function(d) { return d.id; }));
 
-			// Parse numbers, and sort by value.
-			data.forEach(function(d) { d.value = +d.value; });
-			data.sort(function(a, b) { return b.value - a.value; });
+		var bar = svg.selectAll("g.bar")
+			.data(datacsv)
+			.enter().append("g")
+			.attr("class", "bar")
+			.attr("transform", function(d) { return "translate(40," + y(d.id) + ")";});
 
-			// Set the scale domain
-			x.domain([0, d3.max(data, function(d) { return d.value; })]);
-			y.domain(data.map(function(d) { return d.id; }));
+		bar.append("rect")
+			.attr("width", function(d) { return x(d.value); })
+			.attr("height", y.rangeBand())
+			.attr("class", function(d) { return "bar " + d.id; })
+			.attr("id", function(d) { return d.id; })
+			.style('height', height + 'px')
+			.on("mouseover", highlight)
+			.on("mousemove", mousemove)
+			.on("mouseout", unhighlight);
 
-			var bar = svg.selectAll("g.bar")
-				.data(data)
-				.enter().append("g")
-				.attr("class", "bar")
-				.attr("transform", function(d) { return "translate(40," + y(d.id) + ")";});
+		svg.append("g")
+		  .attr("class", "x axis")
+		  .attr("transform", function(d) { return "translate(40,15)"; })			  
+		  .call(xAxis);
 
-			bar.append("rect")
-				.attr("width", function(d) { return x(d.value); })
-				.attr("height", y.rangeBand())
-				.attr("class", function(d) { return "bar " + d.id; })
-				.attr("id", function(d) { return d.id; })
-				.style('height', height + 'px')
-				.on("mouseover", highlight)
-				.on("mouseout", unhighlight);
-
-			svg.append("g")
-			  .attr("class", "x axis")
-			  .attr("transform", function(d) { return "translate(40,15)"; })			  
-			  .call(xAxis);
-
-			svg.append("g")
-			  .attr("class", "y axis")
-			  .attr("transform", function(d) { return "translate(40,0)"; })	
-			  .call(yAxis);
-			  
-			bar.append("text")
-			   .attr("class", "value")
-			   .attr("x", function(d) { return x(d.value); })
-				.attr("y", y.rangeBand() / 2)
-				  .attr("dx", -15)
-				  .attr("dy", ".35em")
-				  .attr("text-anchor", "begin")
-				  .text(function(d) { return format(d.value); });
-		});
-
-		/// NEW
-		// function sizeChange() {
-		//     d3.select("g").attr("transform", "scale(" + $("#container").width()/900 + ")");
-		//     $("svg").height($("#container").width()*0.5);
-		// }
+		svg.append("g")
+		  .attr("class", "y axis")
+		  .attr("transform", function(d) { return "translate(40,0)"; })	
+		  .call(yAxis);
+		  
+		bar.append("text")
+		   .attr("class", "value")
+		   .attr("x", function(d) { return x(d.value); })
+			.attr("y", y.rangeBand() / 2)
+			  .attr("dx", -15)
+			  .attr("dy", ".35em")
+			  .attr("text-anchor", "begin")
+			  .text(function(d) { return format(d.value); });
+		}
 
 		var throttleTimer;
 		function throttle() {
