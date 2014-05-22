@@ -22,19 +22,20 @@
 	  	overflow:hidden;
 	}
 
-	.canton {
+/*	.canton {
 	  fill: #bbb;
 	}
+*/
+/*	.canton:hover{
+		opacity: 0.5;
+	}*/
+
 
 	.canton-boundary {
 	  fill: none;
 	  stroke: 1px;
 	  stroke: #fff;
 	  stroke-linejoin: round;
-	}
-
-	.canton:hover{
-		opacity: 0.5;
 	}
 
 	div.tooltip {
@@ -47,7 +48,6 @@
 	  opacity: 0.8; 
 	  position: absolute;
 	}
-
 
 	.bar rect {
 	  fill: steelblue;
@@ -94,28 +94,23 @@
 			var item_class = item.attr("class");
 			var show_tooltip = true;
 
-			//// straumann's version					
-			// if (item_class == "bar_canton" || item_class == "bar_city"){
-			// 	item_class = item.attr("id");
-			// 	show_tooltip = false;
-			// }	
-
 			//// Mine
 			if (/^bar /.test(item_class)){
-				item_class = "canton " + item.attr("id");
+				item_class = item.attr("id");
 				show_tooltip = false;
 			}	
-
 
 			// In order to draw the highlighted feature properly, we have
 			// to append it to the end of the <svg>, so that it is on top
 			// of everything else
+
+// --------- THESE 2 LINES ARE PROBLEMATIC --------------- //
 			var detached = $('.' + item_class).detach();
-			$('svg').append(detached);
+			$('svg').g,append(detached);
 				
 			$('.' + item_class).css("stroke", "#606060")
-					   .css("stroke-width", "10.5px")
-					   .css("fill-opacity", "0.9");
+					   .css("stroke-width", "2.5px")
+					   .css("fill-opacity", "0.5");
 			
 			if (show_tooltip == true){
 				tooltip.text(item.attr("name"))
@@ -137,10 +132,9 @@
 			var item_class = item.attr("class");
 			
 			if (/^bar /.test(item_class)){
-				item_class = "canton " + item.attr("id");
+				item_class = item.attr("id");
 				show_tooltip = false;
 			}	
-
 
 			$('.' + item_class).css("stroke", "#F4F4F4")
 			                   .css("stroke-width", "1px")
@@ -148,13 +142,12 @@
 			
 			if (show_tooltip == true){
 				tooltip.transition()
-					   .duration(800)
+					   .duration(500)
 					   .style("opacity", 1e-6);
 			}
 				   
 			$('#' + item_class).css("stroke", "none");				   
 		}		
-		
 
 	  	var colorPalette = 	["rgb(198,219,239)", "rgb(158,202,225)","rgb(107,174,214)","rgb(66,146,198)","rgb(33,113,181)","rgb(8,81,156)","rgb(8,48,107)"]
 	  	var color = d3.scale.quantize()
@@ -186,7 +179,7 @@
 		}
 
 		var width = document.getElementById('container').offsetWidth;
-		var height = width / 2;
+		var height = width / 2.3;
 
 		setup(width,height);
 
@@ -194,8 +187,8 @@
 		  projection = d3.geo.albers()
 		    .translate([(width/2), (height/2)])
 		    .rotate([0, 0])
-		    .center([7.2, 46.8])
-		    .scale( width  * 8)
+		    .center([6.7, 46.8])
+		    .scale( width  * 9)
 		    .precision(.1);
 
 		  path = d3.geo.path().projection(projection);
@@ -250,7 +243,7 @@
 		    .append("path")
 		    .attr("d", path)
 		    .attr("name", function(d,i) { return d.properties.name; })
-		    .attr("class", function(d,i) { return "canton " + d.properties.abbr; })
+		    .attr("class", function(d,i) { return d.properties.abbr; })
 		    .style("fill", function(d,i) {
           		var value = dictValue[d.properties.abbr];
 	          if (value) {
