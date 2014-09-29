@@ -3,6 +3,8 @@
 <html>
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+
 
 	<script src="js/d3.min.js"></script>
 	<script src="js/topojson.v1.min.js"></script>
@@ -13,6 +15,7 @@
 	
 	body {
 	  font: 9px sans-serif;
+	  font-family: 'Open Sans', sans-serif;
 	}
 
 	#container {
@@ -32,17 +35,13 @@
 
 	div.tooltip {
 	  color: #222; 
-	  background: #fff; 
+	  /*background: #fff; */
 	  padding: .3em; 
 	  text-shadow: #f5f5f5 0 1px 0;
 	  border-radius: 3px; 
-	  box-shadow: 0px 0px 2px 0px #a6a6a6; 
+	  /*box-shadow: 0px 0px 2px 0px #a6a6a6; */
 	  opacity: 0.8; 
 	  position: absolute;
-	}
-
-	.bar rect {
-	  fill: steelblue;
 	}
 
 	.bar text.value {
@@ -272,6 +271,13 @@
 			.attr("class", function(d) { return "bar " + d.id; })
 			.attr("id", function(d) { return d.id; })
 			.style('height', height + 'px')
+			.style("fill", function(d,i) {
+	          	if (d.value) {
+	              return color(d.value);
+	          	} else {
+	              return "#ccc";
+	          	}
+	      	})
 			.on("mouseover", highlight)
 			.on("mousemove", mousemove)
 			.on("mouseout", unhighlight);
