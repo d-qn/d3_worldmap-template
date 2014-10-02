@@ -17,7 +17,7 @@
 	  font-family: 'Open Sans', sans-serif;
 	}
 
-	#container, #containerSummary {
+	#container {
 		margin:1px 0%;
 	  	border:1px solid #000;
 	  	border-radius: 1px;
@@ -48,8 +48,6 @@
 
   <body>
   
-  	<div id="containerSummary"></div>
-
   	<div id="container"></div>
 
 	  <script type="text/javascript">
@@ -91,33 +89,22 @@
 		function mousemove() {
 			// To have a fixed location of the tooltip vs over the mouse pointer
 			tooltip.style("left", width / 50 + "px")
-			       .style("top",  height1+20 + "px");
+			       .style("top",  height / 5 + "px");
 		}
 
 	  	var colorPalette = 	['rgb(140,81,10)','rgb(191,129,45)','rgb(223,194,125)','rgb(246,232,195)','rgb(245,245,245)','rgb(199,234,229)','rgb(128,205,193)','rgb(53,151,143)','rgb(1,102,94)'];
 	  	var color = d3.scale.linear().domain([0, 20, 30, 40, 50, 60, 70, 80, 100]).range(colorPalette);
 
+
 		var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
-		var topo, boundary, svg1, svg2, g2;
+		var topo, boundary, svg, g;
 
-		// Define height and width for the different svg elements
-		var width = document.getElementById('containerSummary').offsetWidth;
-		var hRatio1 = 5;
-		var hRatio2 = 1.8;
-		var height1 = width/hRatio1;
-		var height2 = width/hRatio2;
+		var width = document.getElementById('container').offsetWidth;
+		var height = width/1.8;
 
-		setup1(width,height1);
-		setup2(width,height2);
+		setup(width,height);
 
-		function setup1(width,height){
-		  svg1 = d3.select("#containerSummary").append("svg")
-		      .attr("width", width)
-		      .attr("height", height)
-		      .append("g"); 
-		}
-
-		function setup2(width,height){
+		function setup(width,height){
 		  projection = d3.geo.albers()
 		    .translate([(width/15), (height/1.8)])
 		    .rotate([0, 0])
@@ -127,11 +114,12 @@
 
 		  path = d3.geo.path().projection(projection);
 
-		  svg2 = d3.select("#container").append("svg")
+		  svg = d3.select("#container").append("svg")
 		      .attr("width", width)
 		      .attr("height", height)
 		      .append("g");
-	  	  g2 = svg2.append("g");    
+
+		  g = svg.append("g");
 		}
 
 		////// load data file
@@ -155,8 +143,6 @@
 					Math.round(+d["no"] / (+d["yes"] + +d["no"]) * 100), +d["turnout"], d["note"]] } ); 
 				// populate the object with canton id - array
 				datacsv.forEach(function(e, i) { dictValue[e[0]] = i;});
-
-				drawBarSummary(datacsv);
 			}
 		 }
 
@@ -171,66 +157,6 @@
 			}
 		}
 
-		function drawBarSummary(datacsv) {
-	
-		// “The first step is to rearrange that data into an array of arrays. Each array represents the data for one category . Within each category array, you’ll need an object for each data value, which itself must contain an x and a y value. The x in our case is just an ID number. The y is the actual data value:”
-		// Excerpt From: Scott Murray. “Interactive Data Visualization for the Web.” iBooks. 
-
-			var votes = [
-				[ { x: 0, y: datacsv[dictValue["SWITZERLAND"]][1]} ],
-				[ { x: 0, y: datacsv[dictValue["SWITZERLAND"]][2]} ],
-			];
-
-			//Set up stack method
-			var stack = d3.layout.stack();
-			//Data, stacked
-			stack(votes);
-
-			//Set up scales
-			var xScale = d3.scale.ordinal()
-				.domain(d3.range(votes[0].length))
-				.rangeRoundBands([0, width], 0.05);
-		
-			var yScale = d3.scale.linear()
-				.domain([0,				
-					d3.max(votes, function(d) {
-						return d3.max(d, function(d) {
-							return d.y0 + d.y;
-						});
-					})
-				])
-				.range([0, height1]);
-				
-			//Easy colors accessible via a 10-step ordinal scale
-			var colors = d3.scale.category10();
-			
-			// Add a group for each row of data
-			var groups = svg1.selectAll("g")
-				.data(votes)
-				.enter()
-				.append("g")
-				.style("fill", function(d, i) {
-					return colors(i);
-				});
-	
-			// Add a rect for each data value
-			var rects = groups.selectAll("rect")
-				.data(function(d) { return d; })
-				.enter()
-				.append("rect")
-				.attr("x", function(d, i) {
-					return xScale(i);
-				})
-				.attr("y", function(d) {
-					return yScale(d.y0);
-				})
-				.attr("height", function(d) {
-					return yScale(d.y);
-				})
-				.attr("width", xScale.rangeBand());
-		}
-
-
 		function drawChoropleth(topo, boundary) {
 		//////////////   Draw choropleth map ///////
 		percentages = datacsv.map( function(d) {return d[3];});
@@ -238,7 +164,7 @@
 
 		 // color.domain([0,100]);
 
-		 g2.append("g")
+		 g.append("g")
 		    .selectAll("path")
 		    .data(topo)
 		    .enter()
@@ -258,7 +184,7 @@
 			.on("mousemove", mousemove)
 			.on("mouseout", unhighlight);
 
-		  g2.append("path")
+		  g.append("path")
 		      .datum(boundary)
 		      .attr("class", "canton-boundary")
 		      .attr("d", path);
@@ -275,12 +201,9 @@
 
 		function redraw() {
 		  width = document.getElementById('container').offsetWidth;
-		  height1 = width / hRatio1;
-	  	  height2 = width / hRatio2;
-	  	  d3.selectAll('svg').remove();
-		  setup1(width,height1);
-		  setup2(width,height2);
-		  drawBarSummary(datacsv);
+		  height = width / 2;
+		  d3.select('svg').remove();
+		  setup(width,height);
 		  drawChoropleth(topo,boundary);
 		}
 
