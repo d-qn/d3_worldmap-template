@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<!-- copied from http://bl.ocks.org/jczaplew/4444770 -->
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+
+	<script src="js/d3.min.js"></script>
+	<script src="js/topojson.v1.min.js"></script>
+	<script src="js/queue.min.js"></script>
+    <script src="js/jquery-1.11.1.min.js"></script>
+
+    <style type="text/css">
+	
+	body {
+	  font: 9px sans-serif;
+	  font-family: 'Open Sans', sans-serif;
+	}
+
+	#container {
+		margin:1px 0%;
+	  	border:1px solid #000;
+	  	border-radius: 1px;
+		height:100%;
+	  	overflow:hidden;
+	}
+
+	.canton-boundary {
+	  fill: none;
+	  stroke: 10px;
+	  stroke: #fff;
+	  stroke-linejoin: round;
+	}
+
+	div.tooltip {
+	  color: #222; 
+	  font-size: 20px;
+	  background: #fff; 
+	  padding: .3em; 
+	  text-shadow: #f5f5f5 0 1px 0;
+	  border-radius: 3px; 
+	  box-shadow: 0px 0px 2px 0px #a6a6a6; 
+	  position: absolute;
+	}
+
+    </style>
+  </head>
+
+  <body>
+  
+  	<div id="container"></div>
+
+	  <script type="text/javascript">
+
+	  	/// NEW
+	  	d3.select(window).on("resize", throttle);
+
+		var highlight = function (){
+			
+			var item = d3.select(this);
+			var item_class = item.attr("class");
+			var show_tooltip = true;			
+
+			$('.' + item_class).css("fill-opacity", "0.5");
+			
+			if (show_tooltip == true){
+				tooltip.text(item.attr("name") + " : " + datacsv[dictValue[item_class]][3] + "%");	
+				
+				tooltip.transition()
+					   .duration(300)
+					   .style("opacity", 1);
+			}
+		}
+		
+		var unhighlight = function (){
+			var item = d3.select(this);
+			var show_tooltip = true;
+			var item_class = item.attr("class");
+			
+			$('.' + item_class).css("fill-opacity", "1.0");
+			
+			if (show_tooltip == true){
+				tooltip.transition()
+					   .duration(300)
+					   .style("opacity", 0.1);
+			}			   
+		}		
+
+		function mousemove() {
+			// To have a fixed location of the tooltip vs over the mouse pointer
+			tooltip.style("left", width / 50 + "px")
+			       .style("top",  height / 5 + "px");
+		}
+
+	  	var colorPalette = 	['rgb(140,81,10)','rgb(191,129,45)','rgb(223,194,125)','rgb(246,232,195)','rgb(245,245,245)','rgb(199,234,229)','rgb(128,205,193)','rgb(53,151,143)','rgb(1,102,94)'];
+	  	var color = d3.scale.linear().domain([0, 20, 30, 40, 50, 60, 70, 80, 100]).range(colorPalette);
+
+
+		var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
+		var topo, boundary, svg, g;
+
+		var width = document.getElementById('container').offsetWidth;
+		var height = width/1.8;
+
+		setup(width,height);
+
+		function setup(width,height){
+		  projection = d3.geo.albers()
+		    .translate([(width/15), (height/1.8)])
+		    .rotate([0, 0])
+		    .center([6.1, 47])
+		    .scale( width  * 12)
+		    .precision(.1);
+
+		  path = d3.geo.path().projection(projection);
+
+		  svg = d3.select("#container").append("svg")
+		      .attr("width", width)
+		      .attr("height", height)
+		      .append("g");
+
+		  g = svg.append("g");
+		}
+
+		////// load data file
+		//////   TODO defer load data file?
+		//////   use d3.map? http://bl.ocks.org/mbostock/4060606
+
+		var dictValue = {};
+		var datacsv, percentages, votes;
+
+		//queue().defer(d3.csv, "data/cantons_randomPercentages.csv").await(readyCsv);
+		queue().defer(d3.csv, "data/cantons_randomVotes.csv").await(readyCsv);
+		queue().defer(d3.json, "data/ch-cantons.json").await(readyMap);
+
+		 function readyCsv(error, csv) {
+		 	if (error) { 
+          		console.log(error);
+       		} else { 
+  				// compute the percentage yes and no
+				datacsv = csv.map( function(d) { return [ d["id"], +d["yes"], +d["no"], 
+					Math.round(+d["yes"] / (+d["yes"] + +d["no"]) * 100), 
+					Math.round(+d["no"] / (+d["yes"] + +d["no"]) * 100), +d["turnout"], d["note"]] } ); 
+				// populate the object with canton id - array
+				datacsv.forEach(function(e, i) { dictValue[e[0]] = i;});
+			}
+		 }
+
+		function readyMap(error, swiss) {
+			if (error) { 
+          		console.log(error);
+       		} else { 
+				topo = topojson.feature(swiss, swiss.objects.cantons).features;
+				boundary = topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; });
+				  
+				drawChoropleth(topo, boundary);
+			}
+		}
+
+		function drawChoropleth(topo, boundary) {
+		//////////////   Draw choropleth map ///////
+		percentages = datacsv.map( function(d) {return d[3];});
+		votes = datacsv.map( function(d) {return d[1]+d[2];});
+
+		 // color.domain([0,100]);
+
+		 g.append("g")
+		    .selectAll("path")
+		    .data(topo)
+		    .enter()
+		    .append("path")
+		    .attr("d", path)
+		    .attr("name", function(d,i) { return d.properties.name; })
+		    .attr("class", function(d,i) { return d.properties.abbr; })
+		    .style("fill", function(d,i) {
+          		var value = datacsv[dictValue[d.properties.abbr]][3];
+	          if (value) {
+	              return color(value);
+	          } else {
+	              return "#ccc";
+	          }
+	      	})
+	      	.on("mouseover", highlight)
+			.on("mousemove", mousemove)
+			.on("mouseout", unhighlight);
+
+		  g.append("path")
+		      .datum(boundary)
+		      .attr("class", "canton-boundary")
+		      .attr("d", path);
+
+		}
+
+		var throttleTimer;
+		function throttle() {
+		  window.clearTimeout(throttleTimer);
+		    throttleTimer = window.setTimeout(function() {
+		      redraw();
+		    }, 200);
+		}
+
+		function redraw() {
+		  width = document.getElementById('container').offsetWidth;
+		  height = width / 2;
+		  d3.select('svg').remove();
+		  setup(width,height);
+		  drawChoropleth(topo,boundary);
+		}
+
+
+	  </script>
+  </body>
+</html>
