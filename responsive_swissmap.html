@@ -11,13 +11,13 @@
     <script src="js/jquery-1.11.1.min.js"></script>
 
     <style type="text/css">
-
+	
 	body {
-	  font: 10px sans-serif;
+	  font: 9px sans-serif;
 	  font-family: 'Open Sans', sans-serif;
 	}
 
-	#container, #containerSummary {
+	#container {
 		margin:1px 0%;
 	  	border:1px solid #000;
 	  	border-radius: 1px;
@@ -33,16 +33,6 @@
 	}
 
 	div.tooltip {
-<<<<<<< HEAD
-	  color: #222;
-  	  font-size: 20px;
-	  /*background: #fff; */
-	  padding: .3em;
-	  text-shadow: #f5f5f5 0 1px 0;
-	  border-radius: 3px;
-	  /*box-shadow: 0px 0px 2px 0px #a6a6a6; */
-	  opacity: 0.8;
-=======
 	  color: #222; 
 	  font-size: 20px;
 	  background: #fff; 
@@ -50,7 +40,6 @@
 	  text-shadow: #f5f5f5 0 1px 0;
 	  border-radius: 3px; 
 	  box-shadow: 0px 0px 2px 0px #a6a6a6; 
->>>>>>> FETCH_HEAD
 	  position: absolute;
 	}
 
@@ -58,12 +47,7 @@
   </head>
 
   <body>
-<<<<<<< HEAD
-=======
   
-  	<div id="containerSummary"></div>
->>>>>>> FETCH_HEAD
-
   	<div id="container"></div>
 
 	  <script type="text/javascript">
@@ -72,117 +56,55 @@
 	  	d3.select(window).on("resize", throttle);
 
 		var highlight = function (){
-
+			
 			var item = d3.select(this);
 			var item_class = item.attr("class");
-<<<<<<< HEAD
-			var show_tooltip = true;
-
-			//// Mine
-			if (/^bar /.test(item_class)){
-				item_class = item.attr("id");
-				// show_tooltip = false;
-			}
-
-			// In order to draw the highlighted feature properly, we have
-			// to append it to the end of the <svg>, so that it is on top
-			// of everything else
-
-// --------- THESE 2 LINES ARE PROBLEMATIC --------------- //
-			// var detached = $('.' + item_class).detach();
-			// $('svg').g.append(detached);
-
-=======
 			var show_tooltip = true;			
->>>>>>> FETCH_HEAD
 
 			$('.' + item_class).css("fill-opacity", "0.5");
-
+			
 			if (show_tooltip == true){
-<<<<<<< HEAD
-				tooltip.text(item.attr("name"))
-					   .style("left", (d3.event.pageX - 34) + "px")
-					   .style("top", (d3.event.pageY - 12) + "px");
-
-=======
 				tooltip.text(item.attr("name") + " : " + datacsv[dictValue[item_class]][3] + "%");	
 				
->>>>>>> FETCH_HEAD
 				tooltip.transition()
 					   .duration(300)
 					   .style("opacity", 1);
 			}
 		}
-
+		
 		var unhighlight = function (){
 			var item = d3.select(this);
 			var show_tooltip = true;
 			var item_class = item.attr("class");
-<<<<<<< HEAD
-
-			if (/^bar /.test(item_class)){
-				item_class = item.attr("id");
-				// show_tooltip = false;
-			}
-
-=======
 			
->>>>>>> FETCH_HEAD
 			$('.' + item_class).css("fill-opacity", "1.0");
-
+			
 			if (show_tooltip == true){
 				tooltip.transition()
-<<<<<<< HEAD
-					   .duration(500)
-					   .style("opacity", 1e-6);
-			}
-
-			$('#' + item_class).css("stroke", "none");
-		}
-=======
 					   .duration(300)
 					   .style("opacity", 0.1);
 			}			   
 		}		
->>>>>>> FETCH_HEAD
 
 		function mousemove() {
 			// To have a fixed location of the tooltip vs over the mouse pointer
 			tooltip.style("left", width / 50 + "px")
-			       .style("top",  height1+20 + "px");
+			       .style("top",  height / 5 + "px");
 		}
 
 	  	var colorPalette = 	['rgb(140,81,10)','rgb(191,129,45)','rgb(223,194,125)','rgb(246,232,195)','rgb(245,245,245)','rgb(199,234,229)','rgb(128,205,193)','rgb(53,151,143)','rgb(1,102,94)'];
 	  	var color = d3.scale.linear().domain([0, 20, 30, 40, 50, 60, 70, 80, 100]).range(colorPalette);
 
-<<<<<<< HEAD
-	  	var colorPalette = 	["rgb(198,219,239)", "rgb(158,202,225)","rgb(107,174,214)","rgb(66,146,198)","rgb(33,113,181)","rgb(8,81,156)","rgb(8,48,107)"]
-	  	var color = d3.scale.quantize()
-    		.range(colorPalette);
 
-=======
->>>>>>> FETCH_HEAD
 		var tooltip = d3.select("#container").append("div").attr("class", "tooltip hidden");
-		var topo, boundary, svg1, svg2, g2;
+		var topo, boundary, svg, g;
 
-		// Define height and width for the different svg elements
-		var width = document.getElementById('containerSummary').offsetWidth;
-		var hRatio1 = 5;
-		var hRatio2 = 1.8;
-		var height1 = width/hRatio1;
-		var height2 = width/hRatio2;
+		var width = document.getElementById('container').offsetWidth;
+		var height = width/1.8;
 
-		setup1(width,height1);
-		setup2(width,height2);
+		setup(width,height);
 
-		function setup1(width,height){
-		  svg1 = d3.select("#containerSummary").append("svg")
-		      .attr("width", width)
-		      .attr("height", height)
-		      .append("g"); 
-		}
-
-		function setup2(width,height){
+		function setup(width,height){
 		  projection = d3.geo.albers()
 		    .translate([(width/15), (height/1.8)])
 		    .rotate([0, 0])
@@ -192,11 +114,12 @@
 
 		  path = d3.geo.path().projection(projection);
 
-		  svg2 = d3.select("#container").append("svg")
+		  svg = d3.select("#container").append("svg")
 		      .attr("width", width)
 		      .attr("height", height)
 		      .append("g");
-	  	  g2 = svg2.append("g");    
+
+		  g = svg.append("g");
 		}
 
 		////// load data file
@@ -211,15 +134,8 @@
 		queue().defer(d3.json, "data/ch-cantons.json").await(readyMap);
 
 		 function readyCsv(error, csv) {
-		 	if (error) {
+		 	if (error) { 
           		console.log(error);
-<<<<<<< HEAD
-       		} else {
-       			datacsv = csv;
-          		datacsv.forEach(function(csv){
-	          		dictValue[csv.id] = +csv.value;
-  				 });
-=======
        		} else { 
   				// compute the percentage yes and no
 				datacsv = csv.map( function(d) { return [ d["id"], +d["yes"], +d["no"], 
@@ -227,87 +143,19 @@
 					Math.round(+d["no"] / (+d["yes"] + +d["no"]) * 100), +d["turnout"], d["note"]] } ); 
 				// populate the object with canton id - array
 				datacsv.forEach(function(e, i) { dictValue[e[0]] = i;});
-
-				drawBarSummary(datacsv);
->>>>>>> FETCH_HEAD
 			}
 		 }
 
 		function readyMap(error, swiss) {
-			if (error) {
+			if (error) { 
           		console.log(error);
-       		} else {
+       		} else { 
 				topo = topojson.feature(swiss, swiss.objects.cantons).features;
 				boundary = topojson.mesh(swiss, swiss.objects.cantons, function(a, b) { return a !== b; });
-<<<<<<< HEAD
-
-				draw(topo, boundary);
-=======
 				  
 				drawChoropleth(topo, boundary);
->>>>>>> FETCH_HEAD
 			}
 		}
-
-		function drawBarSummary(datacsv) {
-	
-		// “The first step is to rearrange that data into an array of arrays. Each array represents the data for one category . Within each category array, you’ll need an object for each data value, which itself must contain an x and a y value. The x in our case is just an ID number. The y is the actual data value:”
-		// Excerpt From: Scott Murray. “Interactive Data Visualization for the Web.” iBooks. 
-
-			var votes = [
-				[ { x: 0, y: datacsv[dictValue["SWITZERLAND"]][1]} ],
-				[ { x: 0, y: datacsv[dictValue["SWITZERLAND"]][2]} ],
-			];
-
-			//Set up stack method
-			var stack = d3.layout.stack();
-			//Data, stacked
-			stack(votes);
-
-			//Set up scales
-			var xScale = d3.scale.ordinal()
-				.domain(d3.range(votes[0].length))
-				.rangeRoundBands([0, width], 0.05);
-		
-			var yScale = d3.scale.linear()
-				.domain([0,				
-					d3.max(votes, function(d) {
-						return d3.max(d, function(d) {
-							return d.y0 + d.y;
-						});
-					})
-				])
-				.range([0, height1]);
-				
-			//Easy colors accessible via a 10-step ordinal scale
-			var colors = d3.scale.category10();
-			
-			// Add a group for each row of data
-			var groups = svg1.selectAll("g")
-				.data(votes)
-				.enter()
-				.append("g")
-				.style("fill", function(d, i) {
-					return colors(i);
-				});
-	
-			// Add a rect for each data value
-			var rects = groups.selectAll("rect")
-				.data(function(d) { return d; })
-				.enter()
-				.append("rect")
-				.attr("x", function(d, i) {
-					return xScale(i);
-				})
-				.attr("y", function(d) {
-					return yScale(d.y0);
-				})
-				.attr("height", function(d) {
-					return yScale(d.y);
-				})
-				.attr("width", xScale.rangeBand());
-		}
-
 
 		function drawChoropleth(topo, boundary) {
 		//////////////   Draw choropleth map ///////
@@ -316,7 +164,7 @@
 
 		 // color.domain([0,100]);
 
-		 g2.append("g")
+		 g.append("g")
 		    .selectAll("path")
 		    .data(topo)
 		    .enter()
@@ -336,73 +184,11 @@
 			.on("mousemove", mousemove)
 			.on("mouseout", unhighlight);
 
-		  g2.append("path")
+		  g.append("path")
 		      .datum(boundary)
 		      .attr("class", "canton-boundary")
 		      .attr("d", path);
 
-<<<<<<< HEAD
-		/////////////     Draw bar plot      //////////
-
-		var format = d3.format(",.0f");
-
-		var x = d3.scale.linear().range([0, width/ 2.5]),
-			y = d3.scale.ordinal().rangeRoundBands([10, height / 1.1 ], .1);
-
-		var xAxis = d3.svg.axis().scale(x).orient("top").ticks(4).tickSize(- height),
-   			yAxis = d3.svg.axis().scale(y).orient("left").tickSize(0);
-
-		// Parse numbers, and sort by value.
-		datacsv.forEach(function(d) { d.value = +d.value; });
-		datacsv.sort(function(a, b) { return b.value - a.value; });
-
-		// Set the scale domain
-		x.domain([0, d3.max(datacsv, function(d) { return d.value; })]);
-		y.domain(datacsv.map(function(d) { return d.id; }));
-
-		var bar = svg.selectAll("g.bar")
-			.data(datacsv)
-			.enter().append("g")
-			.attr("class", "bar")
-			.attr("transform", function(d) { return "translate(40," + y(d.id) + ")";});
-
-		bar.append("rect")
-			.attr("width", function(d) { return x(d.value); })
-			.attr("height", y.rangeBand())
-			.attr("class", function(d) { return "bar " + d.id; })
-			.attr("id", function(d) { return d.id; })
-			.style('height', height + 'px')
-			.style("fill", function(d,i) {
-	          	if (d.value) {
-	              return color(d.value);
-	          	} else {
-	              return "#ccc";
-	          	}
-	      	})
-			.on("mouseover", highlight)
-			.on("mousemove", mousemove)
-			.on("mouseout", unhighlight);
-
-		svg.append("g")
-		  .attr("class", "x axis")
-		  .attr("transform", function(d) { return "translate(40,15)"; })
-		  .call(xAxis);
-
-		svg.append("g")
-		  .attr("class", "y axis")
-		  .attr("transform", function(d) { return "translate(40,0)"; })
-		  .call(yAxis);
-
-		bar.append("text")
-		   .attr("class", "value")
-		   .attr("x", function(d) { return x(d.value); })
-			.attr("y", y.rangeBand() / 2)
-			  .attr("dx", -15)
-			  .attr("dy", ".35em")
-			  .attr("text-anchor", "begin")
-			  .text(function(d) { return format(d.value); });
-=======
->>>>>>> FETCH_HEAD
 		}
 
 		var throttleTimer;
@@ -415,12 +201,9 @@
 
 		function redraw() {
 		  width = document.getElementById('container').offsetWidth;
-		  height1 = width / hRatio1;
-	  	  height2 = width / hRatio2;
-	  	  d3.selectAll('svg').remove();
-		  setup1(width,height1);
-		  setup2(width,height2);
-		  drawBarSummary(datacsv);
+		  height = width / 2;
+		  d3.select('svg').remove();
+		  setup(width,height);
 		  drawChoropleth(topo,boundary);
 		}
 
